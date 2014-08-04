@@ -1,4 +1,4 @@
-(** Print a list of arguments and *)
+(** Print arguments and exit *)
 
 let echo () = 
     let len = Array.length Sys.argv in
