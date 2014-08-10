@@ -43,3 +43,8 @@ let read_base filename =
         with End_of_file -> close_in channel ; []
     in
     { card_index = mk_index list_names ; data = read_file () }
+
+
+(* Querying *)
+let eq_sfield db s n dc = (s = (field db n dc))
+let nonempty_sfield db n dc = ("" <> (field db n dc))
