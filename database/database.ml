@@ -1,7 +1,10 @@
 type data_card = string array
 type data_base = { card_index: string -> int; data: data_card list }
 
-(* Access field n of a card dc of database db *)
+(* Access field name of a card data_card of database base.
+ * Returns a function that takes a card and return its field at position i.
+ * This way index i is calculated only once and stored in closure for
+ * the returned function. *)
 let field base name =
     let i = base.card_index name in fun (card: data_card) -> card.(i)
 
