@@ -1,0 +1,7 @@
+BASIC interpeter
+
+This is an exercise from Developing applications with OCaml book
+(http://caml.inria.fr/pub/docs/oreilly-book), Chapter 6.
+
+Task is to develop a simple BASIC interpreter that supports following
+commands: PRINT, INPUT, LET, GOTO, IF THEN and REM.
