@@ -76,3 +76,70 @@ let pp_command = function
     | Let (v, e) -> "LET " ^ v ^ " = " ^ (pp_expression e);;
 
 let pp_line l = (string_of_int l.num) ^ " " ^ (pp_command l.cmd);;
+
+
+(* Lexing *)
+type lexeme =
+    | Lint of int
+    | Lident of string
+    | Lsymbol of string
+    | Lstring of string
+    | Lend;;
+
+(* String currently being lexed. current points to the position after
+ * which the lexing hasn't been done yet *)
+type string_lexer = {string:string; mutable current:int; size:int};;
+
+let init_lex s = {string=s; current=0; size=String.length s};;
+let forward cl = cl.current <- cl.current + 1;;
+let forward_n cl n = cl.current <- cl.current + n;;
+
+(* Extract lexeme from cl using predicate pred *)
+let extract pred cl =
+    let st = cl.string and pos = cl.current in
+
+    (* This function goest through the string st and moves pointer forward
+     * while element at current position satisfies pred. It returns last
+     * position of the pointer *)
+    let rec ext n = if n < cl.size && (pred st.[n]) then ext(n+1) else n in
+    let res = ext pos
+    (* Move pointer into the string, and extract portion of the string
+     * between pos and res *)
+    in cl.current <- res; String.sub cl.string pos (res-pos);;
+
+let extract_int =
+    let is_int = function '0'..'9' -> true | _ -> false
+    in function cl -> int_of_string (extract is_int cl);;
+
+let extract_ident =
+    let is_alpha_num = function
+        | 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' -> true
+        | _ -> false
+    (* Return partially applied function that takes in just one argument,
+     * string_lexer to extract from *)
+    in extract is_alpha_num;;
+
+exception LexerError;;
+
+let rec lexer cl =
+    let lexer_char c = match c with
+    ' ' | '\t' -> forward cl; lexer cl
+    | 'a'..'z' | 'A'..'Z' -> Lident (extract_ident cl)
+    | '0'..'9' -> Lint (extract_int cl)
+    | '"' -> forward cl;
+        let res = Lstring (extract ((<>) '"') cl)
+        in forward cl; res
+    | '+' | '-' | '*' | '/' | '%' | '&' | '|' | '!' | '=' | '(' | ')' ->
+            forward cl; Lsymbol (String.make 1 c)
+    | '<' | '>' -> forward cl;
+        if cl.current >= cl.size then Lsymbol (String.make 1 c)
+        else let cs = cl.string.[cl.current]
+            in (match(c, cs) with
+            | ('<', '=') -> forward cl; Lsymbol "<="
+            | ('>', '=') -> forward cl; Lsymbol ">="
+            | ('<', '>') -> forward cl; Lsymbol "<>"
+            | _ -> Lsymbol (String.make 1 c) )
+    | _ -> raise LexerError
+    in
+        if cl.current >= cl.size then Lend
+        else lexer_char cl.string.[cl.current];;
